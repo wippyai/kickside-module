@@ -1,0 +1,28 @@
+version: "1.0"
+namespace: acme.starter.security
+
+# Module-owned access policy for the starter endpoints. The grant travels with
+# the module; the role group that receives it is injected by the
+# user_security_scope requirement, keeping the module app-agnostic.
+
+entries:
+  # acme.starter.security:starter_endpoint_access
+  - name: starter_endpoint_access
+    kind: security.policy
+    meta:
+      comment: Authenticated users may reach the starter product endpoints.
+    groups: []
+    policy:
+      resources:
+        - acme.starter.api:*
+      actions: access
+      effect: allow
+
+  # acme.starter.security:user_security_scope
+  - name: user_security_scope
+    kind: ns.requirement
+    meta:
+      comment: Application security group that may reach the starter endpoints.
+    targets:
+      - entry: acme.starter.security:starter_endpoint_access
+        path: ".groups +="

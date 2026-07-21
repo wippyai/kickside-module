@@ -1,0 +1,36 @@
+organization: acme
+module: starter
+description: Starter module scaffold — a writable log sink published as an automation port, persisted rows, a status API, and a web-component page.
+# Pick the license your distribution requires (kickside platform modules use BUSL-1.1).
+license: MIT
+repository: https://github.com/acme/starter
+homepage: https://wippy.ai
+keywords:
+  - kickside
+  - starter
+embed:
+  - acme.starter:ui_fs
+exclude_meta:
+  type:
+    - test
+exclude:
+  - "app:**"
+  - "app.env:**"
+  - "ui/node_modules/**"
+  - "ui/node_modules:**"
+  - "ui/coverage/**"
+  - "ui/coverage:**"
+  - "test/**"
+  - "test:**"
+  - ".wippy/**"
+  - ".wippy:**"
+  - "ui/dist/**"
+  - "static/*.map"
+  - "static/**/*.map"
+  - "test/stubs/**"
+  - "test/stubs:**"
+  - "src/**/stubs/**"
+  - "src/**/*.spec.ts"
+  - "src/**/*.spec.tsx"
+  - "ui/src/**/*.spec.ts"
+  - "ui/src/**/*.spec.tsx"

@@ -1,0 +1,156 @@
+version: "1.0"
+namespace: acme.starter
+
+entries:
+  # acme.starter:definition
+  - name: definition
+    kind: ns.definition
+    meta:
+      title: Acme Starter
+      description: Starter module scaffold — a writable log sink published as an automation port, persisted rows, a status API, and a web-component page.
+
+  # acme.starter:dep.kickside.contract
+  - version: "*"
+    name: dep.kickside.contract
+    kind: ns.dependency
+    meta:
+      comment: Implements the shared writable store contract.
+    component: kickside/contract
+
+  # acme.starter:dep.wippy.migration
+  - version: "*"
+    name: dep.wippy.migration
+    kind: ns.dependency
+    meta:
+      comment: Migration framework for the log entries table.
+    component: wippy/migration
+
+  # ─── Dependency interface (ns.requirement) ───────────────────────────
+  - name: target_db
+    kind: ns.requirement
+    meta:
+      comment: Database resource for log entry rows and migrations.
+    default: app:db
+    targets:
+      - entry: acme.starter.migrations:01_create_log_entries
+        path: .meta.target_db
+
+  - name: api_router
+    kind: ns.requirement
+    meta:
+      comment: HTTP router the starter endpoints attach to. Must enforce auth + endpoint_firewall.
+    default: app:api
+    targets:
+      - entry: acme.starter.api:get_status.endpoint
+        path: .meta.router
+
+  - name: ui_server
+    kind: ns.requirement
+    meta:
+      comment: HTTP server the starter UI bundle is served from.
+    default: app:gateway
+    targets:
+      - entry: acme.starter:ui_static
+        path: .meta.server
+
+  # ─── Log sink (automation port + contract binding) ───────────────────
+  # acme.starter:log
+  - name: log
+    kind: registry.entry
+    meta:
+      type: kickside.automation.port
+      title: Starter Log
+      comment: Write each item to the runtime log.
+      icon: tabler:terminal-2
+    binding: acme.starter:log_sink
+    config_schema:
+      label:
+        type: string
+        title: Log label
+        description: Prefix stamped on every logged item.
+        default: LOG
+        picker: wc-schema-form
+    input_schema: |
+      { "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "content": { "type": "string", "description": "Item body to log." }
+        } }
+    operations:
+      upsert: {}
+
+  # acme.starter:log_sink
+  - name: log_sink
+    kind: contract.binding
+    meta:
+      title: Starter Log
+      comment: Persist and log each incoming item.
+      group: Starter
+      icon: tabler:terminal-2
+    contracts:
+      - contract: kickside.data:writable
+        methods:
+          write: acme.starter:log_write
+
+  # acme.starter:log_write
+  - name: log_write
+    kind: function.lua
+    meta:
+      comment: kickside.data:writable.write — persist the incoming item, log it, acknowledge.
+    source: file://log_write.lua
+    modules:
+      - logger
+    imports:
+      repo: acme.starter.persist:repo
+    method: write
+
+  # ─── UI (the starter page as a Wippy web component) ──────────────────
+  # The module BUILDS (ui/), SHIPS (static/), and SERVES (its own http.static)
+  # the page, exposed as a view.component the host mounts by tag.
+  - name: ui_fs
+    kind: fs.directory
+    meta:
+      comment: Built starter web component bundle (from ui/).
+    directory: ./static
+    auto_init: true
+
+  - name: ui_static
+    kind: http.static
+    meta:
+      comment: Serves the starter web component bundle at /acme-starter.
+      server: app:gateway
+    path: /acme-starter
+    fs: acme.starter:ui_fs
+    options:
+      mime_types:
+        .js: application/javascript
+        .css: text/css
+        .map: application/json
+
+  - name: starter_view
+    kind: registry.entry
+    meta:
+      type: view.component
+      title: Starter
+      announced: true
+      auto_register: true
+      tag_name: acme-starter
+      base_path: acme-starter
+      entry_point: index.js
+      icon: tabler:terminal-2
+      description: Renders the acme/starter status view inside the Kickside shell, loads authenticated status data through the host proxy, and requires no caller-supplied props.
+      props: {}
+
+  - name: nav_item
+    kind: registry.entry
+    meta:
+      type: ui.nav_item
+      section: ""
+      path: /starter
+      route_name: starter
+      title: Starter
+      comment: Log entries written through the starter sink.
+      icon: tabler:terminal-2
+      order: 90
+      render: component
+      component_tag: acme-starter

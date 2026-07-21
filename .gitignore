@@ -1,0 +1,12 @@
+.wippy/
+/wippy.lock
+node_modules/
+.env
+.local/
+static/*.map
+*.wapp
+*.log
+.DS_Store
+*.tsbuildinfo
+ui/vite.config.js
+ui/vite.config.d.ts

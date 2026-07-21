@@ -1,0 +1,24 @@
+version: "1.0"
+workspace:
+  replacements:
+    acme/starter: ..
+override:
+  "acme.starter.security:user_security_scope:data.default": app:user
+vars:
+  pg_host: localhost
+  pg_port: 5433
+  pg_database: acme_test_starter
+  pg_username: kickside
+  pg_password: kickside
+profiles:
+  postgres:
+    override:
+      "app:db:kind": db.sql.postgres
+      "app:db:host": "${pg_host}"
+      "app:db:port": "${pg_port}"
+      "app:db:database": "${pg_database}"
+      "app:db:username": "${pg_username}"
+      "app:db:password": "${pg_password}"
+      "app:db:options.sslmode": disable
+      "app:db:pool.max_open": 16
+      "app:db:pool.max_idle": 8

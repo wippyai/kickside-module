@@ -1,0 +1,16 @@
+version: "1.0"
+namespace: acme.starter.migrations
+
+entries:
+  # acme.starter.migrations:01_create_log_entries
+  - name: 01_create_log_entries
+    kind: function.lua
+    meta:
+      type: migration
+      comment: Create acme_starter_log_entries table holding one row per acknowledged log write.
+      target_db: app:db
+      timestamp: "2026-07-18T12:00:00Z"
+    source: file://01_create_log_entries.lua
+    imports:
+      migration: wippy.migration:migration
+    method: migrate

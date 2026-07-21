@@ -1,0 +1,26 @@
+version: "1.0"
+namespace: acme.starter.api
+
+entries:
+  # acme.starter.api:get_status
+  - name: get_status
+    kind: function.lua
+    meta:
+      comment: GET /starter/status — module identity and logged entry count for the starter page.
+    source: file://get_status.lua
+    method: handler
+    modules:
+      - http
+      - security
+    imports:
+      repo: acme.starter.persist:repo
+
+  # acme.starter.api:get_status.endpoint
+  - name: get_status.endpoint
+    kind: http.endpoint
+    meta:
+      comment: Status endpoint behind the authenticated API router.
+      router: app:api
+    method: GET
+    func: get_status
+    path: /starter/status

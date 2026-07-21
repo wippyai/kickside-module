@@ -1,0 +1,13 @@
+{
+  "templateVersion": 1,
+  "initialized": false,
+  "identity": {
+    "organization": "acme",
+    "module": "starter",
+    "namespace": "acme.starter",
+    "tag": "acme-starter",
+    "route": "starter",
+    "title": "Acme Starter",
+    "githubOwner": "acme"
+  }
+}

@@ -1,0 +1,126 @@
+version: "1.0"
+namespace: app
+
+# Standalone harness for acme/starter. Provides the host resources the boot
+# needs (app:db, app:processes, gateway + api router, env storage, a
+# permissive actor scope) and wires them through wippy/bootloader so the
+# co-located *_test.lua suites run in isolation. The router and gateway exist
+# only so the endpoint and static entries resolve; the HTTP and UI surfaces
+# are covered by the registry-shape suite, not exercised over HTTP.
+# Harness-only; excluded from publish via the module wippy.yaml.
+
+entries:
+  - name: definition
+    kind: ns.definition
+    meta: { title: Starter Test Harness }
+
+  - name: wait_for_boot
+    kind: function.lua
+    meta:
+      type: test
+      suite: "00_setup"
+      comment: Waits for the acme_starter_log_entries migration to land on app:db before the suites run.
+    source: file://wait_for_boot.lua
+    modules: [sql, time]
+    method: run
+
+  - name: log_test
+    kind: function.lua
+    meta:
+      type: test
+      comment: Log sink publishes its port, persists rows, and acknowledges writes.
+      group: Acme Starter
+      suite: acme_starter
+    source: file://log_test.lua
+    modules: [funcs, registry, security]
+    imports:
+      test: wippy.test:test
+      repo: acme.starter.persist:repo
+    method: run
+
+  - name: wiring_test
+    kind: function.lua
+    meta:
+      type: test
+      comment: Endpoint, view, nav, and security entries exist and reference each other consistently.
+      group: Acme Starter
+      suite: acme_starter
+    source: file://wiring_test.lua
+    modules: [registry]
+    imports:
+      test: wippy.test:test
+    method: run
+
+  - name: db
+    kind: db.sql.sqlite
+    meta:
+      comment: In-memory database for the starter suites.
+    file: ":memory:"
+
+  - name: env_storage
+    kind: env.storage.file
+    meta:
+      type: envstorage
+    file_path: ./.wippy/test.env
+    auto_create: true
+
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  # The endpoint and static entries resolve against these resources at boot;
+  # no suite calls them over HTTP — the wiring suite checks registry shape.
+  - name: gateway
+    kind: http.service
+    addr: :19219
+    lifecycle:
+      auto_start: true
+
+  - name: api
+    kind: http.router
+    meta:
+      server: gateway
+    prefix: /api
+
+  - name: user
+    kind: security.policy
+    meta:
+      comment: Permissive actor scope for the suites.
+    policy:
+      resources: '*'
+      actions: '*'
+      effect: allow
+
+  # The harness source is the lock root. Its .wippy.yaml replaces the declared
+  # acme/starter dependency with ../ so the module's canonical source and
+  # colocated tests load directly without a lock-file replacement.
+
+  - name: starter_harness.dep.migration
+    version: "*"
+    kind: ns.dependency
+    meta:
+      comment: Host binding for the migration dependency used by the module under test.
+    component: "wippy/migration"
+    parameters:
+      - name: wippy.migration:app_db
+        value: app:db
+
+  - name: starter_harness.dep.contract
+    version: "*"
+    kind: ns.dependency
+    meta:
+      comment: Shared contract definitions imported by the replacement module under test.
+    component: "kickside/contract"
+
+  - name: starter_harness.dep.bootloader
+    version: "*"
+    kind: ns.dependency
+    meta:
+      comment: Host wiring for the standalone test harness.
+    component: "wippy/bootloader"
+    parameters:
+      - name: wippy.bootloader:application_host
+        value: app:processes
+      - name: wippy.bootloader:env_storage
+        value: app:env_storage

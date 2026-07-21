@@ -1,0 +1,14 @@
+version: "1.0"
+namespace: acme.starter.persist
+
+entries:
+  # acme.starter.persist:repo
+  - name: repo
+    kind: library.lua
+    meta:
+      comment: Log entry rows — insert one acknowledged write, count all rows.
+    source: file://repo.lua
+    modules:
+      - sql
+      - env
+      - uuid

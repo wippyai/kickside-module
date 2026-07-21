@@ -1,0 +1,50 @@
+@import "@wippy-fe/theme/theme-config.css";
+
+/* The host element + the WippyVueElement mount wrapper need a definite height,
+   or the inner height:100% chain collapses to content height. */
+:host { display: block; height: 100%; min-height: 0; }
+:host > div { height: 100%; min-height: 0; }
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Styled only with the universal --p-* theme vocabulary so the page renders
+   correctly inside the shadow DOM of any Wippy host. */
+.st {
+  font-family: inherit;
+  color: var(--p-text-color);
+  background: var(--p-content-background);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.st-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 20px 24px 14px;
+}
+.st-head-icon {
+  width: 40px; height: 40px; border-radius: 11px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--p-primary-color) 14%, transparent);
+  color: var(--p-primary-color);
+}
+.st-head-icon svg { width: 22px; height: 22px; }
+.st-title { font-size: 17px; font-weight: 700; margin: 0; }
+.st-sub { font-size: 13px; color: var(--p-text-muted-color); margin: 2px 0 0; }
+
+.st-body { padding: 8px 24px 24px; }
+.st-card {
+  display: inline-flex; align-items: baseline; gap: 10px;
+  padding: 16px 20px; border-radius: 12px;
+  border: 1px solid var(--p-content-border-color);
+}
+.st-count { font-size: 28px; font-weight: 700; }
+.st-count-label { font-size: 13px; color: var(--p-text-muted-color); }
+
+.st-state { padding: 8px 24px; font-size: 13px; color: var(--p-text-muted-color); }
+.st-error { color: var(--p-danger-color); }
+.st-retry {
+  margin-left: 8px; font: inherit; font-size: 13px; cursor: pointer;
+  color: var(--p-primary-color); background: transparent; border: none; padding: 0;
+}
+.st-retry:hover { text-decoration: underline; }

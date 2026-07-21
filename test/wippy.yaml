@@ -1,0 +1,3 @@
+organization: acme
+module: starter-harness
+description: Standalone runnable harness that boots acme/starter and runs its co-located *_test.lua suites.

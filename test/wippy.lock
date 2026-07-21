@@ -1,0 +1,21 @@
+directories:
+    modules: .wippy
+    src: ./src
+modules:
+    - name: kickside/contract
+      version: 0.1.16
+      hash: 960cf5f44a08067d333202ed8d618d404e1c1a1e287a8298c8d28aee0b54654c
+    - name: wippy/bootloader
+      version: 0.3.14
+      hash: aa5e32807eba6a5ea0e5a224069a006288f58605c4542a444f5469caee862c58
+    - name: wippy/migration
+      version: 0.3.18
+      hash: e00cad6706bb95f556aeab5318a04e55d3884c027b09f6340fc4e7d69c905a17
+    - name: wippy/terminal
+      version: 0.4.5
+      hash: 028180c6044cdd9bbe15330255a4926770e02a291511930264a615f6388824f0
+    - name: wippy/test
+      version: 0.4.14
+      hash: 18ea2d4574d2bfe9e7830ae5b1587749943881f79cfacd22e442bd40e30764f5
+options:
+    unpack_modules: true
