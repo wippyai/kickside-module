@@ -153,6 +153,24 @@ Package identity (`organization/module`), registry namespace
 (`namespace:name`), and component instance IDs are different identities. Do
 not derive one from another. The root `ns.definition` declares the namespace.
 
+## Capability coverage
+
+- The source includes a `contract.binding` sink implementing
+  `kickside.data:writable`.
+- The source includes a destination `kickside.automation.port` that addresses
+  that sink.
+- Durable events, thread append calls, projections, and realtime wakeups are
+  documented in [Threads, Events, And Projections](docs/kickside-development/03-threads-events-projections.md).
+- Block declarations, schemas, lowering, output ports, nested Flows, waits,
+  signals, and the optional visual Workflow layer are documented in
+  [Blocks, Flows, Workflows, And Ports](docs/kickside-development/18-blocks-flows-workflows.md).
+- Contract definitions, bindings, sources, destinations, pullable stores, and
+  writable sinks are documented in
+  [Contracts And Ports](docs/kickside-development/02-contracts-and-ports.md).
+
+The template does not add event, Block, Dataflow, or visual Workflow
+dependencies until the module uses those contracts.
+
 ## Repository map
 
 ```text

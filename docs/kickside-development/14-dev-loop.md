@@ -3,10 +3,10 @@
 Modules are developed against a live, Hub-installed Kickside application, not
 against the Kickside monorepo. Keep two independent directories:
 
-Start a new module from the public
-[wippyai/kickside-module](https://github.com/wippyai/kickside-module) template;
-it carries this handbook, the standalone harness, and the required frontend
-contract in one independently versioned repository.
+Start new work from the public
+[wippyai/kickside-module](https://github.com/wippyai/kickside-module) template.
+It contains the standalone harness, frontend contract, initializer, CI, and
+this handbook.
 
 ```text
 work/
@@ -143,13 +143,148 @@ Traits a module developer uses on a root session:
   - **Use:** install/uninstall modules, run migrations live
 - **`keeper.agents.traits.components:builder`**
   - **Tools:** `fs`, `build_component`
-  - **Use:** edit frontend source; push auto-rebuilds touched bundles
+  - **Use:** edit Keeper-managed frontend source and build a component
 - **`keeper.agents.traits.components:ui`**
   - **Tools:** `ui`, `screenshot_ui`
   - **Use:** drive the app's browser session and capture screenshots
 - **`keeper.agents.traits.git:reviewer`**
   - **Tools:** `rebuild`, `list_clusters`, `set_decision`, `push`, `pull_request`
   - **Use:** review and land changes as git commits/PRs
+
+## Reactive Runtime Loop
+
+The live registry accepts versioned changesets. Updating a registry entry's
+definition or source through Keeper updates the running process without a
+server restart. The module checkout remains the publish source; copy an
+accepted live change into that checkout and run its tests before committing.
+
+Activate the tools needed for direct work:
+
+```json
+{"ids":[
+  "keeper.agents.traits.state:explorer",
+  "keeper.agents.traits.state:editor",
+  "keeper.agents.traits.state:publisher",
+  "keeper.agents.traits.inspect:test_runner"
+]}
+```
+
+The payload above is for `use_trait`. Clients that have not refreshed their
+dynamic MCP tool list can invoke the tools below through `call_tool`.
+
+Open a branch; `main` is not a direct-edit workspace:
+
+```json
+{"id":"keeper.state.tools:branch","arguments":{
+  "action":"set","branch":"dev/acme-starter"
+}}
+```
+
+Inspect exact runtime state before changing it:
+
+```json
+{"id":"keeper.state.tools:explore","arguments":{
+  "operation":"namespace","name":"acme.starter","full":true
+}}
+```
+
+```json
+{"id":"keeper.state.tools:get_entries","arguments":{
+  "ids":["acme.starter:log_write"],
+  "include_source":true,
+  "full":true
+}}
+```
+
+Stage an anchored source or definition edit:
+
+```json
+{"id":"keeper.state.tools:edit","arguments":{
+  "command":"str_replace",
+  "path":"acme.starter:log_write",
+  "old_str":"exact text from the inspected entry",
+  "new_str":"replacement text"
+}}
+```
+
+Creating an entry uploads its definition and optional code in one value:
+
+```json
+{"id":"keeper.state.tools:edit","arguments":{
+  "command":"create",
+  "path":"acme.starter:helper",
+  "file_text":"<definition>\nname: helper\nkind: function.lua\nsource: file://helper.lua\n</definition>\n<source>\nreturn {}\n</source>"
+}}
+```
+
+Apply the branch through governance:
+
+```json
+{"id":"keeper.state.tools:push","arguments":{
+  "message":"Update starter log handler"
+}}
+```
+
+A successful push replaces the affected live registry entries. Calls made
+after the push use the new function source. A direct push does not run
+migrations, tests, or frontend builds; run those operations explicitly. Use
+`run_test` and `test_endpoint` from the test-runner trait for live verification.
+
+### Frontend from the module checkout
+
+The template's `acme.starter:ui_fs` is an `fs.directory` over `./static`, and
+`acme.starter:ui_static` serves that filesystem. After the workspace
+replacement has been mounted, run the UI build watcher in the module checkout:
+
+```bash
+cd ui
+npm install
+npm run dev
+```
+
+The watcher writes each build into `../static`. Reload the browser to fetch the
+new bundle. The Wippy process does not need a restart while `ui_fs`, the static
+route, `tag_name`, `base_path`, and `entry_point` remain unchanged. Changes to
+those registry declarations can be applied through the registry branch above,
+or loaded from the checkout on restart.
+
+### Frontend through Keeper's project filesystem
+
+Keeper's `fs` tool operates on frontend source exposed by the application
+project filesystem under `frontend/...`. It is separate from a standalone
+module checkout's `ui/` directory. Activate
+`keeper.agents.traits.components:builder`, open a branch, then stage one file
+operation per call:
+
+```json
+{"id":"keeper.components.tools:fs","arguments":{
+  "command":"view",
+  "path":"frontend/applications/example/src/App.vue"
+}}
+```
+
+```json
+{"id":"keeper.components.tools:fs","arguments":{
+  "command":"str_replace",
+  "path":"frontend/applications/example/src/App.vue",
+  "old_str":"exact inspected text",
+  "new_str":"replacement text"
+}}
+```
+
+`keeper.state.tools:push` flushes those staged files. For direct work, invoke
+the build explicitly after the push:
+
+```json
+{"id":"keeper.components.tools:build_component","arguments":{
+  "component_id":"@example/app-example",
+  "wait":true,
+  "timeout_s":180
+}}
+```
+
+Task-driven integration may run builds as an integration handler. Direct
+`keeper.state.tools:push` does not.
 
 ## Find A Real Example First
 
@@ -219,8 +354,8 @@ a YAML definition and an optional source body:
 ```
 
 Each `edit` stages one operation on the active branch changeset; `push`
-publishes the changeset and auto-rebuilds any frontend component whose source
-was touched; `abandon` discards it. Registry edits are live and versioned, but
+publishes registry changes and flushes staged project-frontend files;
+`abandon` discards the changeset. Registry edits are live and versioned, but
 they do not write into the sidecar checkout. Port the accepted change into the
 module's canonical source and verify it through the filesystem sidecar loop
 before committing or publishing.
@@ -263,9 +398,13 @@ restart the app after adding or changing them.
 
 - Changes to runtime configuration (profiles, overrides, managed namespaces).
 - Adding, removing, or retargeting a workspace replacement.
-- Filesystem changes inside a workspace replacement, unless the equivalent
-  registry change was applied live through Keeper.
+- Registry definitions or Lua source changed only on disk inside a workspace
+  replacement, unless the equivalent entry change was applied through Keeper.
 - Runtime binary upgrades.
+
+Files served by an existing `fs.directory` do not require a restart. Rebuild
+the files and reload the consuming page. A restart is required when the
+`fs.directory` or its routing declarations change only in the local YAML.
 
 First-boot note: the setup wizard can be skipped server-side with
 `POST /api/v1/ui/splash/welcome/seen`.
