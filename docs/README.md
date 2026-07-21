@@ -5,7 +5,7 @@ The Kickside development handbook is bundled under
 frontend host, proxy, theming, component, testing, sidecar, registry discovery,
 Blocks, Flow, Workflow, migration, and publishing guidance.
 
-This snapshot came from `kickside/kickside@0.1.107` and commit `61e60051` on
+This snapshot came from `kickside/kickside@0.1.108` and commit `484f2d86` on
 2026-07-20. The published copy is the
 [Kickside Hub Wiki](https://hub.wippy.ai/kickside/kickside/wiki/docs/kickside-development/developer-handbook.md).
 
